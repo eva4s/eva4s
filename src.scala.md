@@ -194,16 +194,16 @@ simple value.
 
 # Evolution
 
-This chapter focuses on how an [evolutionary algorithm][] gets executed.
+This chapter focuses on how an [evolutionary algorithm][] is processed.
 
 ## Evolver
 
-An **Evolver** executes an evolutionary algorithm. It is to an evolutionary algorithm what an
-executor is to a thread. How an evolutionary algorithm is executed, i.e. sequential, parallel,
-distributed, depends on the `Evolver` implementation.
+An **Evolver** runs an evolutionary algorithm. It is to an evolutionary algorithm what an executor
+is to a thread. Whether an evolutionary algorithm is run sequentially, in parallel or distributed,
+depends on the `Evolver` implementation.
 
 ```scala
-/** Executes an evolutionary algorithm. */
+/** Runs an evolutionary algorithm. */
 trait Evolver {
 ```
 
