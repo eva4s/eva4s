@@ -23,6 +23,9 @@ alias helps both the library and its users to write more concise and expressive 
 
 # Core Abstractions
 
+This chapter includes all of the abstractions that are required for users of this library to
+implement their own [evolutionary algorithm][].
+
 ## Individual
 
 An `Individual` represents a *candidate solution* to a problem. It contains the *genome*, the
