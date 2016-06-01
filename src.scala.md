@@ -167,3 +167,24 @@ pair of parents. It utilizes the individual constructor of [Fitness][].
     Individual(recombine(parents._1.genome, parents._2.genome))
 }
 ```
+
+## Evolutionary Algorithm
+
+Finally, an **Evolutionary Algorithm** is the combination of [Creation][], [Mutation][] and
+[Recombination][].
+
+```scala
+trait EvolutionaryAlgorithm extends Creation with Mutation with Recombination {
+```
+
+It is completed by the addition of the **Problem** type and a function that returns the particular
+**problem** instance that is to be solved. This problem instance is supposed to be overriden by a
+simple value -- a `val`.
+
+```scala
+  type Problem
+
+  /** Returns the problem to solve. */
+  def problem: Problem
+}
+```
