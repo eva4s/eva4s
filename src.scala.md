@@ -11,6 +11,7 @@ can be cached here instead of needing to be reevaluated every time it is accesse
 information about fitness and its calculation, see the dedicated [fitness][] section.
 
 ```scala
+/** Represents a candidate solution of a problem along with its fitness. */
 case class Individual[Genome] private[eva4s] (genome: Genome, fitness: Double)
 ```
 
@@ -27,12 +28,14 @@ who survives and [parental selection][] to decide who mates.
 The **Fitness** interface is used to calculate the fitness of genomes.
 
 ```scala
+/** Calculates the fitness value of genomes. */
 trait Fitness {
 ```
 
 It requires a single abstract type, the type of genome of which we want to calculate the fitness.
 
 ```scala
+  /** Genome type of the individuals. */
   type Genome
 ```
 
@@ -40,6 +43,7 @@ The main function of this interface returns the fitness value of a given *genome
 function of this interface that needs to be implemented by users of this library.
 
 ```scala
+  /** Returns the fitness value of the given genome. */
   def fitness(genome: Genome): Double
 ```
 
@@ -48,7 +52,8 @@ convenience wrapper around the [Individual][] constructor that uses the correct 
 according to the evolutionary algorithm. Use it like any other constructor.
 
 ```scala
-  def Individual(genome: Genome): Individual[Genome] =
+  /** Returns a new individual from the given genome. */
+  final def Individual(genome: Genome): Individual[Genome] =
     new Individual(genome, fitness(genome))
 }
 ```
