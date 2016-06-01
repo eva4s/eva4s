@@ -57,3 +57,33 @@ according to the evolutionary algorithm. Use it like any other constructor.
     new Individual(genome, fitness(genome))
 }
 ```
+
+## Creation
+
+The **Creation** interface provides the convenient *creation* of individuals. These individuals
+genomes are expected to be generated *randomly*. It extends [Fitness][] for its convenient
+`Individual` constructor. The abstract `Genome` type is also inherited from `Fitness`.
+
+```scala
+/** Creates randomly generated individuals. */
+trait Creation extends Fitness {
+```
+
+The main function of this interface returns a newly generated *genome*, which, as explained above,
+is supposed to be generated randomly. This is the only function of this interface that needs to be
+implemented by users of this library.
+
+```scala
+  /** Returns a randomly generated genome. */
+  def ancestor: Genome
+```
+
+The following convenience function directly returns a new individual using a new, randomly generated
+`ancestor` genome. It utilizes the individual constructor of [Fitness][].
+
+```scala
+  /** Returns a randomly generated individual. */
+  final def Ancestor: Individual[Genome] =
+    Individual(ancestor)
+}
+```
