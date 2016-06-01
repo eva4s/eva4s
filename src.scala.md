@@ -181,8 +181,8 @@ trait EvolutionaryAlgorithm extends Creation with Mutation with Recombination {
 ```
 
 It is completed by the addition of the **Problem** type and a function that returns the particular
-**problem** instance that is to be solved. This problem instance is supposed to be overriden by a
-simple value -- a `val`.
+**problem** instance that is to be solved. This problem instance is supposed to be overridden by a
+simple value.
 
 ```scala
   type Problem
@@ -191,3 +191,26 @@ simple value -- a `val`.
   def problem: Problem
 }
 ```
+
+# Evolution
+
+This chapter focuses on how an [evolutionary algorithm][] gets executed.
+
+## Evolver
+
+An **Evolver** executes an evolutionary algorithm. It is to an evolutionary algorithm what an
+executor is to a thread. How an evolutionary algorithm is executed, i.e. sequential, parallel,
+distributed, depends on the `Evolver` implementation.
+
+```scala
+/** Executes an evolutionary algorithm. */
+trait Evolver {
+```
+
+The main function of this interface runs the given evolutionary algorithm and returns the fittest
+individual after the evolution.
+
+```scala
+  /** Returns the fittest individual after evolution. */
+  def apply[Genome,Problem](eva: EvolutionaryAlgorithm[Genome,Problem]): Individual[Genome]
+}
