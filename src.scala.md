@@ -8,6 +8,16 @@ The namespacing package of this project is called `eva4s`.
 
 ```scala
 package object eva4s {
+```
+
+The base package object provides a convenient type alias for a pair of [individuals][Individual], a
+**Couple**. Such a couple is used in some places of the library, when recombining individuals to new
+children, namely the [recombination][] interface and its companion [parental selection][]. This type
+alias helps both the library and its users to write more concise and expressive source code.
+
+```scala
+  /** Type alias for a pair of individuals. */
+  type Couple[Genome] = (Individual[Genome],Individual[Genome])
 }
 ```
 
