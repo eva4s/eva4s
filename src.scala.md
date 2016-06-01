@@ -224,3 +224,105 @@ instance is supposed to be overridden by a simple value.
   def reporter: Reporter
 }
 ```
+
+## Reporter
+
+A **Reporter** reports on the progress of the evolution. It may report by logging to a file, to the
+console, to a graphical user interface or it may do simply nothing.
+
+```scala
+/** Reports on the progress of the evolution. */
+trait Reporter {
+```
+
+The following function reports on an evolutionary step. This information may be about the currently
+fittest individual or the average fitness.
+
+```scala
+  /** Reports statistics of an evolutionary step. */
+  def report(generation: Int, offspring: Seq[Individual[_]]): Unit
+```
+
+The following function reports on the last evolutionary step, namely the fittest individual.
+
+```scala
+  /** Reports the fittest individual of the final generation. */
+  def report(generation: Int, fittest: Individual[_]): Unit
+}
+```
+
+The `Reporter` companion object contains simple, default reporter implementations. It also contains
+a composite reporter that can be used to combine multiple reporter instances.
+
+```scala
+/** Contains simple reporter implementations. */
+object Reporter {
+```
+
+A simple reporter that writes to the [standard output stream](https://en.wikipedia.org/wiki/stdout).
+
+```scala
+  /** Prints simple statistics to STDOUT. */
+  object ConsoleReporter extends Reporter {
+```
+
+The progress report on the evolutionary steps prints the generation, the best, average and worst
+fitness.
+
+```scala
+    def report(generation: Int, offspring: Seq[Individual[_]]): Unit = {
+      val fittest = offspring.minBy(_.fitness)
+      val unfittest = offspring.maxBy(_.fitness)
+      val average = offspring.foldLeft(0.0)(_ + _.fitness) / offspring.size
+
+      Console.println(s"""gen: $generation fit: $fittest average: $average unfit: $unfittest""")
+    }
+```
+
+The fittest individual is also just printed.
+
+```scala
+    def report(generation: Int, fittest: Individual[_]): Unit = {
+      Console.println(fittest)
+    }
+  }
+```
+
+Another simple reporter implementation that simply does nothing. Use it, if reporting is irrelevant
+and the fittest individual is the only relevant information you want from running an evolutionary
+algorithm.
+
+```scala
+  /** Does nothing. */
+  object None extends Reporter {
+    def report(generation: Int, offspring: Seq[Individual[_]]): Unit = ()
+    def report(generation: Int, fittest: Individual[_]): Unit = ()
+  }
+```
+
+Finally, there is also a composite reporter. Via its companion object factory you can supply a list
+of reporters which will all be run in the sequence they are provided.
+
+```scala
+  /** Reports to a list of subordinate reporters. */
+  case class Composite private (reporters: List[Reporter]) extends Reporter {
+
+    def report(generation: Int, offspring: Seq[Individual[_]]): Unit =
+      reporters.foreach(_.report(generation, offspring))
+
+    def report(generation: Int, fittest: Individual[_]): Unit =
+      reporters.foreach(_.report(generation, fittest))
+
+  }
+
+  /** Factory for composite reporters. */
+  object Composite {
+
+    /** Returns a new composite reporter. */
+    def apply(reporters: Reporter*) =
+      new Composite(reporters.toList)
+
+  }
+
+}
+```
