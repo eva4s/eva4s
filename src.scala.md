@@ -20,10 +20,10 @@ genome. To see how individuals are created, see the [fitness][] section.
 
 ## Fitness
 
-The fitness of an individual, in biology, describes its ability to both survive and reproduce. In
-the context of evolutionary algorithms it serves as a value describing how *optimal* a candidate
-solution is for solving a given problem. It is used by both [environmental selection][] to decide
-who survives and [parental selection][] to decide who mates.
+In biology, the fitness of an individual, describes its ability to both survive and reproduce. In
+the context of evolutionary algorithms the fitness value tells us how *optimal* a given candidate
+solution is for solving a given problem. Fitness is used by both [environmental selection][] to
+decide who survives and [parental selection][] to decide who mates.
 
 The **Fitness** interface is used to calculate the fitness of genomes.
 
