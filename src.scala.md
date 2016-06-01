@@ -1,6 +1,17 @@
 % Evolutionary Algorithms
 
-# Core
+# Introduction
+
+## Namespacing
+
+The namespacing package of this project is called `eva4s`.
+
+```scala
+package object eva4s {
+}
+```
+
+# Core Abstractions
 
 ## Individual
 
