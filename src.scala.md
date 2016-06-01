@@ -87,3 +87,33 @@ The following convenience function directly returns a new individual using a new
     Individual(ancestor)
 }
 ```
+
+## Mutation
+
+The **Mutation** interface provides the convenient *mutation* of individuals. These individuals
+genomes are expected to be mutated *randomly*. It extends [Fitness][] for its convenient
+`Individual` constructor. The abstract `Genome` type is also inherited from `Fitness`.
+
+```scala
+/** Mutates genomes. */
+trait Mutation extends Fitness {
+```
+
+The main function of this interface returns a new, mutated *genome*, which, as explained above, is
+supposed to be mutated randomly. This is the only function of this interface that needs to be
+implemented by users of this library.
+
+```scala
+  /** Returns a new genome by mutating the given one. */
+  def mutate(genome: Genome): Genome
+```
+
+The following convenience function directly returns a new individual using a new, randomly mutated
+genome. It utilizes the individual constructor of [Fitness][].
+
+```scala
+  /** Returns a new individual by mutating the given one. */
+  final def Mutant(individual: Individual[Genome]): Individual[Genome] =
+    Individual(mutate(individual.genome))
+}
+```
