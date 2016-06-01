@@ -43,14 +43,6 @@ function of this interface that needs to be implemented by users of this library
   def fitness(genome: Genome): Double
 ```
 
-A secondary, convenience function returns the fitness of a given *individual*. It simply uses the
-genome of the given individual.
-
-```scala
-  def fitness(individual: Individual[Genome]): Double =
-    fitness(individual.genome)
-```
-
 The purpose of the following function is the convenient creation of a new individual. It is just a
 convenience wrapper around the [Individual][] constructor that uses the correct fitness value
 according to the evolutionary algorithm. Use it like any other constructor.
