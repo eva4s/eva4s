@@ -213,4 +213,14 @@ individual after the evolution.
 ```scala
   /** Returns the fittest individual after evolution. */
   def apply[Genome,Problem](eva: EvolutionaryAlgorithm[Genome,Problem]): Individual[Genome]
+```
+
+An evolver also contains a `Reporter` which reports on the progress of the evolution from generation
+to generation. For more information, see the dedicated [reporter][] section below. This reporter
+instance is supposed to be overridden by a simple value.
+
+```scala
+  /** Returns the used reporter. */
+  def reporter: Reporter
 }
+```
