@@ -1,0 +1,6 @@
+/.ensime
+/.ensime_cache
+target/
+*.class
+*.jar
+*.pdf
