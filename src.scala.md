@@ -138,3 +138,32 @@ genome. It utilizes the individual constructor of [Fitness][].
     Individual(mutate(individual.genome))
 }
 ```
+
+## Recombination
+
+The **Recombination** interface provides the convenient *recombination* of individuals. It extends
+[Fitness][] for its convenient `Individual` constructor. The abstract `Genome` type is also
+inherited from `Fitness`.
+
+```scala
+/** Recombines genomes. */
+trait Recombination extends Fitness {
+```
+
+The main function of this interface returns a new *genome* by recombining the given ones. This is
+the only function of this interface that needs to be implemented by users of this library.
+
+```scala
+  /** Returns a new genome by recombining the given ones. */
+  def recombine(g1: Genome, g2: Genome): Genome
+```
+
+The following convenience function directly returns a new child individual by recombining the given
+pair of parents. It utilizes the individual constructor of [Fitness][].
+
+```scala
+  /** Returns a new individual by recombining the given pair of parents. */
+  final def Child(parents: Couple[Genome]): Individual[Genome] =
+    Individual(recombine(parents._1.genome, parents._2.genome))
+}
+```
