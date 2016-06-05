@@ -16,6 +16,7 @@ PANDOCFLAGS = \
 	--number-sections \
 	--latex-engine=xelatex \
 	-V documentclass=report \
+	-V linkcolor=blue \
 	-V geometry='left=24.1mm' \
 	-V geometry='right=24.1mm' \
 	-V geometry='bottom=4.5cm' \
