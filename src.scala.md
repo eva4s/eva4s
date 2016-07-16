@@ -2,6 +2,10 @@
 
 # Introduction
 
+## What is an Evolutionary Algorithm?
+
+## About Optimization Problems
+
 ## Namespacing
 
 The namespacing package of this project is called `eva4s`.
@@ -18,8 +22,20 @@ alias helps both the library and its users to write more concise and expressive 
 ```scala
   /** Type alias for a pair of individuals. */
   type Couple[Genome] = (Individual[Genome],Individual[Genome])
+```
+
+The **Mutagen** function type alias helps clarify its otherwise unspecific function type
+signature. Mutagens are explored in more detail in the [controlling mutation][] section.
+
+```scala
+  /** Type alias for a mutagen function. */
+  type Mutagen = Int => Double
 }
 ```
+
+**TODO:** The probability value of a mutagen should be constrained with type information, i.e. it
+should only allow values between zero (0%) and one (100%). This should be enforced by the the type
+system and the compiler, possibly with tagged types, plain `Double` is simply too broad.
 
 # Core Abstractions
 
@@ -78,7 +94,7 @@ according to the evolutionary algorithm. Use it like any other constructor.
 ```scala
   /** Returns a new individual from the given genome. */
   final def Individual(genome: Genome): Individual[Genome] =
-    new Individual(genome, fitness(genome))
+    Individual(genome, fitness(genome))
 }
 ```
 
@@ -225,6 +241,62 @@ instance is supposed to be overridden by a simple value.
 }
 ```
 
+## SingleEvolver
+
+```scala
+package eva4s
+package evolving
+
+import scala.annotation.tailrec
+import scala.util.Random
+
+/** An evolver that recombines by using a fixed amount of pairs and reduces all individuals,
+  * including the parent generation, to a fixed population size. Each child may be mutated by the
+  * probability given by the [[Mutagen]].
+  *
+  * Both [[selecting environmental selection]] and [[matchmaking parental selection]] drive this
+  * evolver, though it depends on the amount of survivers and pairs in which ratio.
+  */
+class SingleEvolver(
+  generations: Int = 200,
+  survivers: Int = 23,
+  pairs: Int = 100,
+  matchmaker: Matchmaker = matchmaking.RandomForcedMatchmaker,
+  mutagen: Mutagen = mutating.ConstantMutagen(0.3),
+  selecter: Selecter = selecting.PlusSelecter,
+  val reporter: Reporter = Reporter.ConsoleReporter)
+    extends Evolver {
+
+  def apply(eva: EvolutionaryAlgorithm) = {
+    val ancestors = Vector.fill(survivers)(eva.Ancestor)
+
+    @tailrec
+    def evolve(generation: Int, parents: Seq[Individual[eva.Genome]]): Individual[eva.Genome] = {
+      if (generation == generations) {
+        parents minBy { _.fitness }
+      } else {
+        val mutationProbability = mutagen(generation)
+
+        val offspring = for {
+          pair <- matchmaker.findPairs(pairs, parents)
+          child = eva.Child(pair)
+        } yield if (Random.nextDouble < mutationProbability) eva.Mutant(child) else child
+
+        val nextGeneration = selecter.select(parents, offspring)
+
+        reporter.report(generation, offspring)
+        evolve(generation = generation + 1, parents = nextGeneration)
+      }
+    }
+
+    val fittest = evolve(generation = 1, parents = ancestors)
+    reporter.report(generations, fittest)
+    fittest
+  }
+
+}
+```
+
 ## Reporter
 
 A **Reporter** reports on the progress of the evolution. It may report by logging to a file, to the
@@ -321,6 +393,188 @@ of reporters which will all be run in the sequence they are provided.
     /** Returns a new composite reporter. */
     def apply(reporters: Reporter*) =
       new Composite(reporters.toList)
+
+  }
+
+}
+```
+
+# Controlling Evolution
+
+## Environmental Selection
+
+Environmental selection determines how the individuals for the next generation are chosen.
+
+### Selecter
+
+A **Selecter** determines how the individuals for the next generation are chosen. The amount of
+individuals returned equals the size of the parent generation.
+
+Selecter implementations may choose whether or not to include the parent generation in the selecting
+process or if they just want to consider the offspring.
+
+```scala
+/** Determines how the individuals for the next generation are chosen. */
+trait Selecter {
+
+  /** Returns the fittest individuals. */
+  def select[Genome](parents: Seq[Individual[Genome]], offspring: Seq[Individual[Genome]]): Seq[Individual[Genome]]
+
+}
+```
+
+### Plus Selection
+
+```scala
+/** A deterministic selecter which chooses the fittest individuals.
+  *
+  * Plus selection aka (\mu+\lambda) selection represents an elitist selection, which
+  * deterministically chooses the best \mu individuals form all individuals, i.e. parents (\mu) and
+  * offspring (\lambda).
+  */
+object PlusSelecter extends Selecter {
+
+  def select[Genome](parents: Seq[Individual[Genome]], offspring: Seq[Individual[Genome]]): Seq[Individual[Genome]] = {
+    (parents ++ offspring).sortBy(_.fitness).take(parents.size)
+  }
+
+}
+```
+
+## Parental Selection
+
+### Matchmaker
+
+```scala
+/** A matchmaker pairs individuals up with each other. It models parental selection.
+  *
+  * @note You can find matchmaker implementations in the [[matchmaking]] package.
+  */
+trait Matchmaker {
+
+  /** Returns a specified amount of pairs out of the individuals. */
+  def findPairs[Genome](pairs: Int, individuals: Seq[Individual[Genome]]): Seq[Couple[Genome]]
+
+}
+```
+
+### Random Forced Matchmaker
+
+```scala
+import util.collection._
+
+/** A matchmaker implementation that returns af fixed amount of arbitrary pairs of individuals.
+  *
+  * This is the simplest form of probabilistic matchmaking.
+  */
+object RandomForcedMatchmaker extends Matchmaker {
+
+  def findPairs[Genome](pairs: Int, parents: Seq[Individual[Genome]]): Seq[Couple[Genome]] = {
+    Vector.fill(pairs)(parents.choosePair)
+  }
+
+}
+```
+
+## Controlling Mutation
+
+A **Mutagen** determines the probability with which individuals mutate, depending on the current
+generation.
+
+### Constant Mutagen
+
+```scala
+/** A mutagen that always has the same probability. */
+case class ConstantMutagen(probability: Double) extends Mutagen {
+  def apply(generation: Int): Double = probability
+}
+```
+
+# Evolutionary Algorithm Applications
+
+```scala
+/** This class can be used to quickly run an evolutionary algorithm with an evolver. Here is an
+  * example to showcase how to implement this:
+  *
+  * {{{
+  * object Example extends EvolutionaryApp {
+  *   type Genome =
+  *   type Problem =
+  *
+  *   val eva = new EvolutionaryAlgorithm[Genome,Problem]] {
+  *     val problem =
+  *     def fitness(genome: Genome) =
+  *     ...
+  *   }
+  *
+  *   val evolver = new evolving.SingleEvolver()
+  * }
+  * }}}
+  */
+abstract class EvolutionaryApp {
+
+  /** Returns the used evolutionary algorithm. */
+  def eva: EvolutionaryAlgorithm[_,_]
+
+  /** Returns the used evolver. */
+  def evolver: Evolver
+
+  /** Runs the evolutionary algorithm through the evolver. */
+  def main(args: Array[String]): Unit = {
+    val _ = evolver(eva)
+  }
+
+}
+```
+
+## Example Applications
+
+This example uses the mathematical function **f(x) = x<sup>2</sup> + 4** which has a global minimum
+at (0,4). Thus the through the evolution generated optimal Individual should be close to a genome of
+**0** and fitness of **4**. This evolutionary algorithm will start with larger randomly generated
+**x**-values, mutate only slightly by adding / subtracting **1** to the genome and recombining by
+building the average of the genomes. You should be able to observe the impact on how fast the
+algorithm converges to the optimum by fiddling around with these functions as well as the parameters
+of the evolver.
+
+```scala
+package org.example
+
+import eva4s._
+
+object Example extends EvolutionaryApp {
+  val eva = new EvolutionaryAlgorithm[Double,Function[Double,Double]] {
+    val problem = (x: Double) => x * x + 4
+    def fitness(genome: Double) = problem(genome)
+    def ancestor: Double = util.Random.nextDouble() * 1000
+    def mutate(genome: Double): Double = if (util.Random.nextBoolean()) genome + 1 else genome - 1
+    def recombine(g1: Double, g2: Double) = (g1 + g2) / 2
+  }
+
+  val evolver = new evolving.SingleEvolver()
+}
+```
+
+# Utility
+
+## Collections
+
+```scala
+import scala.language.higherKinds
+import scala.util.Random
+
+object collection {
+
+  implicit class SeqEnhancements[CC[X] <: Seq[X],X](coll: CC[X]) {
+
+    def shuffle: Seq[X] = coll.map(_ -> Random.nextLong).sortBy(_._2).map(_._1)
+
+    def choose(n: Int): Seq[X] = shuffle.take(n)
+
+    def choosePair: (X,X) = {
+      val two = choose(2)
+      (two(0),two(1))
+    }
 
   }
 
