@@ -1,10 +1,17 @@
 % Evolutionary Algorithms
 
+**TODO:** Use RNG in all places where relevant to allow reproducible evolution. Also, use
+[[Reporter]] to log RNG seed.
+
 # Introduction
 
 ## What is an Evolutionary Algorithm?
 
+**TODO**
+
 ## About Optimization Problems
+
+**TODO**
 
 ## Namespacing
 
@@ -13,6 +20,8 @@ The namespacing package of this project is called `eva4s`.
 ```scala
 package object eva4s {
 ```
+
+## Type Aliases
 
 The base package object provides a convenient type alias for a pair of [individuals][Individual], a
 **Couple**. Such a couple is used in some places of the library, when recombining individuals to new
@@ -34,7 +43,7 @@ signature. Mutagens are explored in more detail in the [controlling mutation][] 
 ```
 
 **TODO:** The probability value of a mutagen should be constrained with type information, i.e. it
-should only allow values between zero (0%) and one (100%). This should be enforced by the the type
+should only allow values between zero (0%) and one (100%). This should be enforced by the type
 system and the compiler, possibly with tagged types, plain `Double` is simply too broad.
 
 # Core Abstractions
@@ -48,7 +57,7 @@ An `Individual` represents a *candidate solution* to a problem. It contains the 
 genetic information, which, more directly, *is* this candidate solution. It also contains the
 *fitness* value of its genome, which will be calculated in advance to the individual creation, so it
 can be cached here instead of needing to be reevaluated every time it is accessed. For more
-information about fitness and its calculation, see the dedicated [fitness][] section.
+information about fitness and its calculation, see the [fitness][] section.
 
 ```scala
 /** Represents a candidate solution of a problem along with its fitness. */
@@ -101,8 +110,11 @@ according to the evolutionary algorithm. Use it like any other constructor.
 ## Creation
 
 The **Creation** interface provides the convenient *creation* of individuals. These individuals
-genomes are expected to be generated *randomly*. It extends [Fitness][] for its convenient
-`Individual` constructor. The abstract `Genome` type is also inherited from `Fitness`.
+genomes are expected to be generated *in a random fashion*. These randomly generated individuals
+are used by [[Evolver]] implementations for the initial generation.
+
+This interface extends [Fitness][] for its convenient `Individual` constructor. The abstract
+`Genome` type is also inherited from `Fitness`.
 
 ```scala
 /** Creates randomly generated individuals. */
@@ -131,8 +143,10 @@ The following convenience function directly returns a new individual using a new
 ## Mutation
 
 The **Mutation** interface provides the convenient *mutation* of individuals. These individuals
-genomes are expected to be mutated *randomly*. It extends [Fitness][] for its convenient
-`Individual` constructor. The abstract `Genome` type is also inherited from `Fitness`.
+genomes are expected to be mutated *randomly*. **TODO:** Describe purpose of this interface.
+
+This interface extends [Fitness][] for its convenient `Individual` constructor. The abstract
+`Genome` type is also inherited from `Fitness`.
 
 ```scala
 /** Mutates genomes. */
@@ -160,9 +174,11 @@ genome. It utilizes the individual constructor of [Fitness][].
 
 ## Recombination
 
-The **Recombination** interface provides the convenient *recombination* of individuals. It extends
-[Fitness][] for its convenient `Individual` constructor. The abstract `Genome` type is also
-inherited from `Fitness`.
+The **Recombination** interface provides the convenient *recombination* of individuals.
+**TODO:** Describe purpose of this interface.
+
+This interface extends [Fitness][] for its convenient `Individual` constructor. The abstract
+`Genome` type is also inherited from `Fitness`.
 
 ```scala
 /** Recombines genomes. */
@@ -197,8 +213,8 @@ trait EvolutionaryAlgorithm extends Creation with Mutation with Recombination {
 ```
 
 It is completed by the addition of the **Problem** type and a function that returns the particular
-**problem** instance that is to be solved. This problem instance is supposed to be overridden by a
-simple value.
+**problem** instance that is to be solved. This problem instance is supposed to be overridden with
+a simple value.
 
 ```scala
   type Problem
@@ -228,7 +244,7 @@ individual after the evolution.
 
 ```scala
   /** Returns the fittest individual after evolution. */
-  def apply[Genome,Problem](eva: EvolutionaryAlgorithm[Genome,Problem]): Individual[Genome]
+  def apply[Genome,Problem](eva: EvolutionaryAlgorithm): Individual[eva.Genome]
 ```
 
 An evolver also contains a `Reporter` which reports on the progress of the evolution from generation
@@ -243,6 +259,13 @@ instance is supposed to be overridden by a simple value.
 
 ## SingleEvolver
 
+An evolver that recombines individuals as often as given by a fixed amount and reduces all
+individuals, *including* the parent generation, to a fixed population size. Each child may
+be mutated by the probability given by the [Mutagen][].
+
+Both [selecting][environmental selection] and [matchmaking][parental selection] drive this
+evolver, though it depends on the amount of survivers and pairs in which ratio.
+
 ```scala
 package eva4s
 package evolving
@@ -250,13 +273,6 @@ package evolving
 import scala.annotation.tailrec
 import scala.util.Random
 
-/** An evolver that recombines by using a fixed amount of pairs and reduces all individuals,
-  * including the parent generation, to a fixed population size. Each child may be mutated by the
-  * probability given by the [[Mutagen]].
-  *
-  * Both [[selecting environmental selection]] and [[matchmaking parental selection]] drive this
-  * evolver, though it depends on the amount of survivers and pairs in which ratio.
-  */
 class SingleEvolver(
   generations: Int = 200,
   survivers: Int = 23,
@@ -360,8 +376,8 @@ The fittest individual is also just printed.
   }
 ```
 
-Another simple reporter implementation that simply does nothing. Use it, if reporting is irrelevant
-and the fittest individual is the only relevant information you want from running an evolutionary
+A reporter implementation that simply does nothing. Use it, if reporting is irrelevant and the
+fittest individual is the only relevant information you want from running an evolutionary
 algorithm.
 
 ```scala
