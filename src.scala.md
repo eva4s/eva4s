@@ -23,6 +23,13 @@ package object eva4s {
 
 ## Type Aliases
 
+Provide aliases to `scala.util.Random` which are used throughout this library.
+
+```scala
+  type Random = scala.util.Random
+  val  Random = scala.util.Random
+```
+
 The base package object provides a convenient type alias for a pair of [individuals][Individual], a
 **Couple**. Such a couple is used in some places of the library, when recombining individuals to new
 children, namely the [recombination][] interface and its companion [parental selection][]. This type
@@ -175,8 +182,9 @@ genome. It utilizes the individual constructor of [Fitness][].
 
 ## Recombination
 
-The **Recombination** interface provides the convenient *recombination* of individuals.
-Recombination is used by [Evolver][] implementations to create individuals for the next generation.
+The **Recombination** interface provides the convenient *recombination* of individuals. In contrast
+to [Creation][] and [Mutation][], recombination should be deterministic. Recombination is used by
+[Evolver][] implementations to create individuals for the next generation.
 
 This interface extends [Fitness][] for its convenient `Individual` constructor and the `Genome`
 type.
@@ -268,19 +276,15 @@ Both [selecting][environmental selection] and [matchmaking][parental selection] 
 though it depends on the amount of survivers and pairs in which ratio.
 
 ```scala
-package eva4s
-package evolving
-
 import scala.annotation.tailrec
-import scala.util.Random
 
 class SingleEvolver(
   generations: Int = 200,
   survivers: Int = 23,
   pairs: Int = 100,
-  matchmaker: Matchmaker = matchmaking.RandomForcedMatchmaker,
-  mutagen: Mutagen = mutating.ConstantMutagen(0.3),
-  selecter: Selecter = selecting.PlusSelecter,
+  matchmaker: Matchmaker = RandomForcedMatchmaker,
+  mutagen: Mutagen = ConstantMutagen(0.3),
+  selecter: Selecter = PlusSelecter,
   val reporter: Reporter = Reporter.ConsoleReporter)
     extends Evolver {
 
@@ -288,7 +292,7 @@ class SingleEvolver(
     val ancestors = Vector.fill(survivers)(eva.Ancestor)
 
     @tailrec
-    def evolve(generation: Int, parents: Seq[Individual[eva.Genome]]): Individual[eva.Genome] = {
+    def evolve(generation: Int, parents: Vector[Individual[eva.Genome]]): Individual[eva.Genome] = {
       if (generation == generations) {
         parents minBy { _.fitness }
       } else {
@@ -329,7 +333,7 @@ fittest individual or the average fitness.
 
 ```scala
   /** Reports statistics of an evolutionary step. */
-  def report(generation: Int, offspring: Seq[Individual[_]]): Unit
+  def report(generation: Int, offspring: Vector[Individual[_]]): Unit
 ```
 
 The following function reports on the last evolutionary step, namely the fittest individual.
@@ -359,7 +363,7 @@ The progress report on the evolutionary steps prints the generation, the best, a
 fitness.
 
 ```scala
-    def report(generation: Int, offspring: Seq[Individual[_]]): Unit = {
+    def report(generation: Int, offspring: Vector[Individual[_]]): Unit = {
       val fittest = offspring.minBy(_.fitness)
       val unfittest = offspring.maxBy(_.fitness)
       val average = offspring.foldLeft(0.0)(_ + _.fitness) / offspring.size
@@ -383,7 +387,7 @@ fittest individual is the only relevant information you want from running an evo
 ```scala
   /** Does nothing. */
   object None extends Reporter {
-    def report(generation: Int, offspring: Seq[Individual[_]]): Unit = ()
+    def report(generation: Int, offspring: Vector[Individual[_]]): Unit = ()
     def report(generation: Int, fittest: Individual[_]): Unit = ()
   }
 ```
@@ -395,7 +399,7 @@ of reporters which will all be run in the sequence they are provided.
   /** Reports to a list of subordinate reporters. */
   case class Composite private (reporters: List[Reporter]) extends Reporter {
 
-    def report(generation: Int, offspring: Seq[Individual[_]]): Unit =
+    def report(generation: Int, offspring: Vector[Individual[_]]): Unit =
       reporters.foreach(_.report(generation, offspring))
 
     def report(generation: Int, fittest: Individual[_]): Unit =
@@ -434,23 +438,21 @@ process or if they just want to consider the offspring.
 trait Selecter {
 
   /** Returns the fittest individuals. */
-  def select[Genome](parents: Seq[Individual[Genome]], offspring: Seq[Individual[Genome]]): Seq[Individual[Genome]]
+  def select[Genome](parents: Vector[Individual[Genome]], offspring: Vector[Individual[Genome]]): Vector[Individual[Genome]]
 
 }
 ```
 
 ### Plus Selection
 
+Plus selection aka **(μ+λ)** selection represents an *elitist* selection, which deterministically
+chooses the best **μ** individuals from all individuals, i.e. parents **μ** and offspring **λ**.
+
 ```scala
-/** A deterministic selecter which chooses the fittest individuals.
-  *
-  * Plus selection aka (\mu+\lambda) selection represents an elitist selection, which
-  * deterministically chooses the best \mu individuals form all individuals, i.e. parents (\mu) and
-  * offspring (\lambda).
-  */
+/** A deterministic selecter which chooses the fittest individuals. */
 object PlusSelecter extends Selecter {
 
-  def select[Genome](parents: Seq[Individual[Genome]], offspring: Seq[Individual[Genome]]): Seq[Individual[Genome]] = {
+  def select[Genome](parents: Vector[Individual[Genome]], offspring: Vector[Individual[Genome]]): Vector[Individual[Genome]] = {
     (parents ++ offspring).sortBy(_.fitness).take(parents.size)
   }
 
@@ -459,33 +461,32 @@ object PlusSelecter extends Selecter {
 
 ## Parental Selection
 
+Parental selection determines how individuals are chosen for recombination.
+
 ### Matchmaker
 
+A matchmaker pairs individuals up with each other.
+
 ```scala
-/** A matchmaker pairs individuals up with each other. It models parental selection.
-  *
-  * @note You can find matchmaker implementations in the [[matchmaking]] package.
-  */
 trait Matchmaker {
 
   /** Returns a specified amount of pairs out of the individuals. */
-  def findPairs[Genome](pairs: Int, individuals: Seq[Individual[Genome]]): Seq[Couple[Genome]]
+  def findPairs[Genome](pairs: Int, individuals: Vector[Individual[Genome]]): Vector[Couple[Genome]]
 
 }
 ```
 
 ### Random Forced Matchmaker
 
-```scala
-import util.collection._
+A matchmaker implementation that returns af fixed amount of arbitrary pairs of individuals. This is
+the simplest form of probabilistic matchmaking.
 
-/** A matchmaker implementation that returns af fixed amount of arbitrary pairs of individuals.
-  *
-  * This is the simplest form of probabilistic matchmaking.
-  */
+```scala
+import utilities._
+
 object RandomForcedMatchmaker extends Matchmaker {
 
-  def findPairs[Genome](pairs: Int, parents: Seq[Individual[Genome]]): Seq[Couple[Genome]] = {
+  def findPairs[Genome](pairs: Int, parents: Vector[Individual[Genome]]): Vector[Couple[Genome]] = {
     Vector.fill(pairs)(parents.choosePair)
   }
 
@@ -499,6 +500,8 @@ generation.
 
 ### Constant Mutagen
 
+A constant mutagen always has the same probability.
+
 ```scala
 /** A mutagen that always has the same probability. */
 case class ConstantMutagen(probability: Double) extends Mutagen {
@@ -508,25 +511,9 @@ case class ConstantMutagen(probability: Double) extends Mutagen {
 
 # Evolutionary Algorithm Applications
 
+This class provides a simple command line application that runs a given evolutionary algorithm.
+
 ```scala
-/** This class can be used to quickly run an evolutionary algorithm with an evolver. Here is an
-  * example to showcase how to implement this:
-  *
-  * {{{
-  * object Example extends EvolutionaryApp {
-  *   type Genome =
-  *   type Problem =
-  *
-  *   val eva = new EvolutionaryAlgorithm[Genome,Problem]] {
-  *     val problem =
-  *     def fitness(genome: Genome) =
-  *     ...
-  *   }
-  *
-  *   val evolver = new evolving.SingleEvolver()
-  * }
-  * }}}
-  */
 abstract class EvolutionaryApp {
 
   /** Returns the used evolutionary algorithm. */
@@ -554,20 +541,19 @@ algorithm converges to the optimum by fiddling around with these functions as we
 of the evolver.
 
 ```scala
-package org.example
-
-import eva4s._
-
 object Example extends EvolutionaryApp {
-  val eva = new EvolutionaryAlgorithm[Double,Function[Double,Double]] {
+  val eva = new EvolutionaryAlgorithm {
+    type Genome  = Double
+    type Problem = Double => Double
+
     val problem = (x: Double) => x * x + 4
     def fitness(genome: Double) = problem(genome)
-    def ancestor: Double = util.Random.nextDouble() * 1000
-    def mutate(genome: Double): Double = if (util.Random.nextBoolean()) genome + 1 else genome - 1
+    def ancestor: Double = Random.nextDouble() * 1000
+    def mutate(genome: Double): Double = if (Random.nextBoolean()) genome + 1 else genome - 1
     def recombine(g1: Double, g2: Double) = (g1 + g2) / 2
   }
 
-  val evolver = new evolving.SingleEvolver()
+  val evolver = new SingleEvolver()
 }
 ```
 
@@ -576,20 +562,17 @@ object Example extends EvolutionaryApp {
 ## Collections
 
 ```scala
-import scala.language.higherKinds
-import scala.util.Random
+object utilities {
 
-object collection {
+  implicit class RichVector[A](coll: Vector[A]) {
 
-  implicit class SeqEnhancements[CC[X] <: Seq[X],X](coll: CC[X]) {
+    def shuffle: Vector[A] = coll.map(_ -> Random.nextLong).sortBy(_._2).map(_._1)
 
-    def shuffle: Seq[X] = coll.map(_ -> Random.nextLong).sortBy(_._2).map(_._1)
+    def choose(n: Int): Vector[A] = shuffle.take(n)
 
-    def choose(n: Int): Seq[X] = shuffle.take(n)
-
-    def choosePair: (X,X) = {
-      val two = choose(2)
-      (two(0),two(1))
+    def choosePair: (A,A) = {
+      val Vector(a,b) = choose(2)
+      (a,b)
     }
 
   }
