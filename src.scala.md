@@ -1,7 +1,7 @@
 % Evolutionary Algorithms
 
 **TODO:** Use RNG in all places where relevant to allow reproducible evolution. Also, use
-[[Reporter]] to log RNG seed.
+[Reporter][] to log RNG seed.
 
 # Introduction
 
@@ -33,8 +33,8 @@ alias helps both the library and its users to write more concise and expressive 
   type Couple[Genome] = (Individual[Genome],Individual[Genome])
 ```
 
-The **Mutagen** function type alias helps clarify its otherwise unspecific function type
-signature. Mutagens are explored in more detail in the [controlling mutation][] section.
+The **Mutagen** function type alias helps clarify its otherwise unspecific function type signature.
+Mutagens are explored in more detail in the [controlling mutation][] section.
 
 ```scala
   /** Type alias for a mutagen function. */
@@ -110,11 +110,11 @@ according to the evolutionary algorithm. Use it like any other constructor.
 ## Creation
 
 The **Creation** interface provides the convenient *creation* of individuals. These individuals
-genomes are expected to be generated *in a random fashion*. These randomly generated individuals
-are used by [[Evolver]] implementations for the initial generation.
+genomes are expected to be generated *in a random fashion*. These randomly generated individuals are
+used by [Evolver][] implementations for the initial generation.
 
-This interface extends [Fitness][] for its convenient `Individual` constructor. The abstract
-`Genome` type is also inherited from `Fitness`.
+This interface extends [Fitness][] for its convenient `Individual` constructor and the `Genome`
+type.
 
 ```scala
 /** Creates randomly generated individuals. */
@@ -143,10 +143,11 @@ The following convenience function directly returns a new individual using a new
 ## Mutation
 
 The **Mutation** interface provides the convenient *mutation* of individuals. These individuals
-genomes are expected to be mutated *randomly*. **TODO:** Describe purpose of this interface.
+genomes are expected to be mutated *in a random fashion*. These mutations are used by [Evolver][]
+implementations to vary the solution search space during evolution.
 
-This interface extends [Fitness][] for its convenient `Individual` constructor. The abstract
-`Genome` type is also inherited from `Fitness`.
+This interface extends [Fitness][] for its convenient `Individual` constructor and the `Genome`
+type.
 
 ```scala
 /** Mutates genomes. */
@@ -175,10 +176,10 @@ genome. It utilizes the individual constructor of [Fitness][].
 ## Recombination
 
 The **Recombination** interface provides the convenient *recombination* of individuals.
-**TODO:** Describe purpose of this interface.
+Recombination is used by [Evolver][] implementations to create individuals for the next generation.
 
-This interface extends [Fitness][] for its convenient `Individual` constructor. The abstract
-`Genome` type is also inherited from `Fitness`.
+This interface extends [Fitness][] for its convenient `Individual` constructor and the `Genome`
+type.
 
 ```scala
 /** Recombines genomes. */
@@ -213,8 +214,8 @@ trait EvolutionaryAlgorithm extends Creation with Mutation with Recombination {
 ```
 
 It is completed by the addition of the **Problem** type and a function that returns the particular
-**problem** instance that is to be solved. This problem instance is supposed to be overridden with
-a simple value.
+**problem** instance that is to be solved. This problem instance is supposed to be overridden with a
+simple value.
 
 ```scala
   type Problem
@@ -244,7 +245,7 @@ individual after the evolution.
 
 ```scala
   /** Returns the fittest individual after evolution. */
-  def apply[Genome,Problem](eva: EvolutionaryAlgorithm): Individual[eva.Genome]
+  def apply[Genome,Problem](eva: EvolutionaryAlgorithm): Individual[_]
 ```
 
 An evolver also contains a `Reporter` which reports on the progress of the evolution from generation
@@ -260,11 +261,11 @@ instance is supposed to be overridden by a simple value.
 ## SingleEvolver
 
 An evolver that recombines individuals as often as given by a fixed amount and reduces all
-individuals, *including* the parent generation, to a fixed population size. Each child may
-be mutated by the probability given by the [Mutagen][].
+individuals, *including* the parent generation, to a fixed population size. Each child may be
+mutated by the probability given by the [Mutagen][].
 
-Both [selecting][environmental selection] and [matchmaking][parental selection] drive this
-evolver, though it depends on the amount of survivers and pairs in which ratio.
+Both [selecting][environmental selection] and [matchmaking][parental selection] drive this evolver,
+though it depends on the amount of survivers and pairs in which ratio.
 
 ```scala
 package eva4s
@@ -377,8 +378,7 @@ The fittest individual is also just printed.
 ```
 
 A reporter implementation that simply does nothing. Use it, if reporting is irrelevant and the
-fittest individual is the only relevant information you want from running an evolutionary
-algorithm.
+fittest individual is the only relevant information you want from running an evolutionary algorithm.
 
 ```scala
   /** Does nothing. */
@@ -530,7 +530,7 @@ case class ConstantMutagen(probability: Double) extends Mutagen {
 abstract class EvolutionaryApp {
 
   /** Returns the used evolutionary algorithm. */
-  def eva: EvolutionaryAlgorithm[_,_]
+  def eva: EvolutionaryAlgorithm
 
   /** Returns the used evolver. */
   def evolver: Evolver
