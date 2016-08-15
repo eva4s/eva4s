@@ -13,19 +13,12 @@
 
 **TODO**
 
-## Namespacing
-
-The namespacing package of this project is called `eva4s`.
-
-```scala
-package object eva4s {
-```
-
 ## Type Aliases
 
 Provide aliases to `scala.util.Random` which are used throughout this library.
 
 ```scala
+package object eva4s {
   type Random = scala.util.Random
   val  Random = scala.util.Random
 ```
@@ -52,6 +45,14 @@ Mutagens are explored in more detail in the [controlling mutation][] section.
 **TODO:** The probability value of a mutagen should be constrained with type information, i.e. it
 should only allow values between zero (0%) and one (100%). This should be enforced by the type
 system and the compiler, possibly with tagged types, plain `Double` is simply too broad.
+
+## Namespacing
+
+The namespacing package of this project is called `eva4s`.
+
+```scala
+package eva4s {
+```
 
 # Core Abstractions
 
@@ -110,7 +111,7 @@ according to the evolutionary algorithm. Use it like any other constructor.
 ```scala
   /** Returns a new individual from the given genome. */
   final def Individual(genome: Genome): Individual[Genome] =
-    Individual(genome, fitness(genome))
+    new Individual(genome, fitness(genome))
 }
 ```
 
@@ -253,7 +254,7 @@ individual after the evolution.
 
 ```scala
   /** Returns the fittest individual after evolution. */
-  def apply[Genome,Problem](eva: EvolutionaryAlgorithm): Individual[_]
+  def apply(eva: EvolutionaryAlgorithm): Individual[_]
 ```
 
 An evolver also contains a `Reporter` which reports on the progress of the evolution from generation
@@ -579,3 +580,13 @@ object utilities {
 
 }
 ```
+
+# End
+
+End the main namespacing scope.
+
+```scala
+}
+```
+
+**TODO:** Find a better way to close the namespacing scope.
