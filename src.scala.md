@@ -377,7 +377,7 @@ The fittest individual is also just printed.
 
 ```scala
     def report(generation: Int, fittest: Individual[_]): Unit = {
-      Console.println(fittest)
+      Console.println(s"""gen: $generation fit: $fittest""")
     }
   }
 ```
